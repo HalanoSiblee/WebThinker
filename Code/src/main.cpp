@@ -12,6 +12,7 @@
 #include "storage/Storage.hpp"
 
 #include <string>
+//#include <iostream> //DEBUG
 
 static const int kMenuH = 28;
 static const int kStatusH = 22;
@@ -231,5 +232,10 @@ int main(int argc, char** argv) {
     auto* win = new MainWindow(1280, 800, "WebThinker — Untitled");
     win->show(argc, argv);
     Fl::set_color(FL_SELECTION_COLOR, 0, 0, 0);
+    Fl::set_boxtype(FL_UP_BOX, FL_FLAT_BOX);
+    //Fl::set_boxtype(FL_DOWN_BOX, FL_FLAT_BOX);
+    //Fl::set_boxtype(FL_THIN_UP_BOX, FL_FLAT_BOX);
+    //Fl::set_boxtype(FL_THIN_DOWN_BOX, FL_FLAT_BOX);
+     //std::cout << "[TRACE] Loop or once\n"; //DEBUG
     return Fl::run();
 }

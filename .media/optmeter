@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="195.40459mm"
+   height="53.704769mm"
+   viewBox="0 0 195.40459 53.704769"
+   version="1.1"
+   id="svg1"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient34">
+      <stop
+         style="stop-color:#ff0000;stop-opacity:1;"
+         offset="0.23942775"
+         id="stop35" />
+      <stop
+         style="stop-color:#0000ff;stop-opacity:1;"
+         offset="1"
+         id="stop36" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient34"
+       id="linearGradient36"
+       x1="11.7307"
+       y1="181.29263"
+       x2="194.08978"
+       y2="181.29263"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-10.405289,-154.34796)">
+    <rect
+       style="opacity:1;fill:url(#linearGradient36);fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linejoin:round;stroke-opacity:1"
+       id="rect1"
+       width="182.35909"
+       height="38.391396"
+       x="11.7307"
+       y="162.09694" />
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2;stroke-linejoin:round"
+       id="path36"
+       d="m 87.780397,213.6711 -12.67995,0 6.339975,-10.98116 z"
+       transform="matrix(1,0,0,1.6867016,46.938372,-159.17057)" />
+    <text
+       xml:space="preserve"
+       style="font-size:6.35px;font-family:'BigBlueTermPlus Nerd Font Mono';-inkscape-font-specification:'BigBlueTermPlus Nerd Font Mono';text-align:center;letter-spacing:0.264583px;word-spacing:0.264583px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linejoin:round;stroke-opacity:1"
+       x="57.475178"
+       y="159.11046"
+       id="text36"><tspan
+         id="tspan36"
+         style="stroke:none;stroke-width:2"
+         x="57.607471"
+         y="159.11046">optimization meter :</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6.35px;font-family:'BigBlueTermPlus Nerd Font Mono';-inkscape-font-specification:'BigBlueTermPlus Nerd Font Mono';text-align:center;letter-spacing:0.264583px;word-spacing:0.264583px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2;stroke-linejoin:round;stroke-opacity:1"
+       x="26.01569"
+       y="206.9944"
+       id="text37"><tspan
+         id="tspan37"
+         style="stroke-width:2"
+         x="26.147982"
+         y="206.9944">Node.js</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6.35px;font-family:'BigBlueTermPlus Nerd Font Mono';-inkscape-font-specification:'BigBlueTermPlus Nerd Font Mono';text-align:center;letter-spacing:0.264583px;word-spacing:0.264583px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2;stroke-linejoin:round;stroke-opacity:1"
+       x="181.73279"
+       y="206.9944"
+       id="text38"><tspan
+         id="tspan38"
+         style="stroke-width:2"
+         x="181.86508"
+         y="206.9944">Bit-packing</tspan></text>
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2;stroke-linejoin:round"
+       id="path38"
+       d="m 87.780397,213.6711 -12.67995,0 6.339975,-10.98116 z"
+       transform="matrix(-1,0,0,-1.6867016,209.81922,522.51045)" />
+  </g>
+</svg>

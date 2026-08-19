@@ -12,6 +12,7 @@ struct Square {
     double h = 2.0;   // height (world units)
     std::string title;
     std::string text;   // core text
+    int z = 0;            // stacking -10 back .. 10 front
     uint32_t color = 0x0044AAFF; // packed 0x00RRGGBB border
 
     bool selected = false;

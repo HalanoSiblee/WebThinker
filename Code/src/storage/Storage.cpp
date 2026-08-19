@@ -43,7 +43,8 @@ bool Storage::writeSqlite(const Graph& graph, const std::string& dbPath) {
             h     REAL NOT NULL,
             title TEXT,
             text  TEXT,
-            color INTEGER
+            color INTEGER,
+            z     INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS vectors (
             id    INTEGER PRIMARY KEY,
@@ -63,7 +64,8 @@ bool Storage::writeSqlite(const Graph& graph, const std::string& dbPath) {
     }
 
     // Clear existing
-    sqlite3_exec(db, "ALTER TABLE edges ADD COLUMN color INTEGER;", nullptr, nullptr, nullptr); // ignore if exists
+    sqlite3_exec(db, "ALTER TABLE edges ADD COLUMN color INTEGER;", nullptr, nullptr, nullptr);
+    sqlite3_exec(db, "ALTER TABLE squares ADD COLUMN z INTEGER DEFAULT 0;", nullptr, nullptr, nullptr);
     sqlite3_exec(db, "DELETE FROM nodes; DELETE FROM edges; DELETE FROM squares; DELETE FROM vectors;", nullptr, nullptr, nullptr);
 
     // Insert nodes
@@ -87,7 +89,7 @@ bool Storage::writeSqlite(const Graph& graph, const std::string& dbPath) {
     sqlite3_finalize(stmt);
 
     // Insert squares
-    const char* insSq = "INSERT INTO squares (id, x, y, w, h, title, text, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+    const char* insSq = "INSERT INTO squares (id, x, y, w, h, title, text, color, z) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
     if (sqlite3_prepare_v2(db, insSq, -1, &stmt, nullptr) == SQLITE_OK) {
         for (const auto* s : graph.squares()) {
             sqlite3_bind_int64(stmt, 1, static_cast<sqlite3_int64>(s->id));
@@ -98,6 +100,7 @@ bool Storage::writeSqlite(const Graph& graph, const std::string& dbPath) {
             sqlite3_bind_text(stmt, 6, s->title.c_str(), -1, SQLITE_TRANSIENT);
             sqlite3_bind_text(stmt, 7, s->text.c_str(), -1, SQLITE_TRANSIENT);
             sqlite3_bind_int(stmt, 8, static_cast<int>(s->color));
+            sqlite3_bind_int(stmt, 9, s->z);
             sqlite3_step(stmt);
             sqlite3_reset(stmt);
         }
@@ -193,7 +196,7 @@ bool Storage::readSqlite(Graph& graph, const std::string& dbPath) {
     }
 
         // Load squares
-    if (sqlite3_prepare_v2(db, "SELECT id, x, y, w, h, title, text, color FROM squares;", -1, &stmt, nullptr) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(db, "SELECT id, x, y, w, h, title, text, color, z FROM squares;", -1, &stmt, nullptr) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             uint64_t id = static_cast<uint64_t>(sqlite3_column_int64(stmt, 0));
             double x = sqlite3_column_double(stmt, 1);
@@ -203,9 +206,13 @@ bool Storage::readSqlite(Graph& graph, const std::string& dbPath) {
             const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
             const char* text  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6));
             uint32_t color = static_cast<uint32_t>(sqlite3_column_int(stmt, 7));
+            int z = sqlite3_column_int(stmt, 8);
             Square& s = graph.addSquareWithId(id, x, y, w, h, title ? title : "");
             s.text = text ? text : "";
             s.color = color;
+            if (z < -10) z = -10;
+            if (z > 10) z = 10;
+            s.z = z;
         }
         sqlite3_finalize(stmt);
     }

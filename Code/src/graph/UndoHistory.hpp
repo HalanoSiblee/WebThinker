@@ -19,6 +19,7 @@ struct SquareSnap {
     double x = 0, y = 0, w = 2, h = 2;
     std::string title;
     std::string text;
+    int z = 0;
     uint32_t color = 0;
 };
 

@@ -5,8 +5,14 @@
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_SVG_Image.H>
+#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Value_Slider.H>
+#include <FL/Fl_Return_Button.H>
 #include <cmath>
 #include <algorithm>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <cstdlib>
 
@@ -280,7 +286,11 @@ void GraphView::drawSquares() {
     if (!graph_) return;
     fl_font(FL_HELVETICA, 12);
 
-    for (auto* s : graph_->squares()) {
+    std::vector<Square*> ordered = graph_->squares();
+    std::sort(ordered.begin(), ordered.end(),
+              [](const Square* a, const Square* b) { return a->z < b->z; });
+
+    for (auto* s : ordered) {
         int cx, cy;
         worldToScreen(s->x, s->y, cx, cy);
         int hw = static_cast<int>(std::lround((s->w * 0.5) * scale_));
@@ -435,7 +445,7 @@ void GraphView::draw() {
     // HUD
     fl_font(FL_HELVETICA, 11);
     fl_color(OLED_HINT);
-    const char* mode_str = "LMB select | Shift+RMB multi | Alt+drag | Ctrl+add | S/V | Shift+R box | Shift+pan | RMB link | Del | F F1-3";
+    const char* mode_str = "LMB select | Shift+RMB multi | Alt+drag | Ctrl+add | S/V | Shift+R box | Shift+pan | RMB link | Del | F F1-4";
     if (mode_ == BoxSelect || box_selecting_)
         mode_str = "BOX SELECT — drag rectangle, release to select";
     fl_draw(mode_str, x() + 8, y() + 16);
@@ -789,6 +799,21 @@ int GraphView::handle(int event) {
                             redraw();
                         }
                     }
+                } else if (VectorObject* v = graph_->selectedVector()) {
+                    char def[96];
+                    snprintf(def, sizeof(def), "%.3f %.3f %.3f", v->x, v->y, (double)v->scale);
+                    const char* r = fl_input("Vector X Y Scale:", def);
+                    if (r) {
+                        double nx, ny, ns;
+                        int got = sscanf(r, "%lf %lf %lf", &nx, &ny, &ns);
+                        if (got >= 2) {
+                            pushUndo();
+                            v->x = nx; v->y = ny;
+                            if (got >= 3 && ns > 0.01) v->scale = (float)ns;
+                            do_callback();
+                            redraw();
+                        }
+                    }
                 }
             }
             return 1;
@@ -809,6 +834,14 @@ int GraphView::handle(int event) {
                     if (r) {
                         pushUndo();
                         s->title = r;
+                        do_callback();
+                        redraw();
+                    }
+                } else if (VectorObject* v = graph_->selectedVector()) {
+                    const char* r = fl_input("Rename vector:", v->title.c_str());
+                    if (r) {
+                        pushUndo();
+                        v->title = r;
                         do_callback();
                         redraw();
                     }
@@ -882,6 +915,56 @@ int GraphView::handle(int event) {
             }
             return 1;
         }
+
+        // F4 — square Z-index slider (stacking: -10 back .. 10 front)
+        if (key == FL_F+4) {
+            if (graph_) {
+                Square* s = graph_->selectedSquare();
+                if (!s) {
+                    fl_alert("Select a square to set Z-index.");
+                    return 1;
+                }
+                const int W = 320, H = 120;
+                Fl_Window win(W, H, "Square Z-index");
+                win.set_modal();
+                win.color(fl_rgb_color(20, 20, 20));
+
+                auto* slider = new Fl_Value_Slider(20, 30, W - 40, 28, "Z  (back) -10 ... 10 (front)");
+                slider->type(FL_HOR_NICE_SLIDER);
+                slider->bounds(-10, 10);
+                slider->step(1);
+                slider->value(s->z);
+                slider->labelsize(12);
+                slider->labelcolor(fl_rgb_color(180, 180, 180));
+                slider->selection_color(fl_rgb_color(0, 140, 200));
+                slider->color(fl_rgb_color(40, 40, 40));
+                slider->textcolor(fl_rgb_color(220, 220, 220));
+                slider->align(FL_ALIGN_TOP);
+
+                int done = 0;
+                auto* ok = new Fl_Return_Button(W/2 - 50, H - 40, 100, 28, "OK");
+                ok->callback([](Fl_Widget* w, void* p) {
+                    *static_cast<int*>(p) = 1;
+                    w->window()->hide();
+                }, &done);
+
+                win.end();
+                win.show();
+                while (win.shown()) Fl::wait();
+
+                if (done) {
+                    int nz = static_cast<int>(std::lround(slider->value()));
+                    if (nz < -10) nz = -10;
+                    if (nz > 10) nz = 10;
+                    pushUndo();
+                    for (auto* sq : graph_->squares())
+                        if (sq->selected) sq->z = nz;
+                    do_callback();
+                    redraw();
+                }
+            }
+            return 1;
+        }
         // Shift+R — box select mode
         if ((key == 'r' || key == 'R') && (Fl::event_state() & FL_SHIFT)) {
             mode_ = BoxSelect;
@@ -889,7 +972,7 @@ int GraphView::handle(int event) {
             redraw();
             return 1;
         }
-        // V — add SVG vector at cursor (SVG data goes in Core Text on panel)
+        // V — add SVG vector (optional file)
         if ((key == 'v' || key == 'V') && !(Fl::event_state() & FL_CTRL)) {
             if (graph_) {
                 const char* title = fl_input("Vector title:", "SVG");
@@ -898,12 +981,72 @@ int GraphView::handle(int event) {
                 float scale = 1.0f;
                 if (sc) scale = static_cast<float>(atof(sc));
                 if (scale < 0.01f) scale = 1.0f;
+
+                std::string svg_data;
+                int load = fl_choice("Load SVG from file?", "Empty (paste later)", "Choose file…", nullptr);
+                if (load == 1) {
+                    Fl_File_Chooser chooser(".", "SVG Files (*.svg)\t*.svg", Fl_File_Chooser::SINGLE, "Open SVG");
+                    chooser.show();
+                    while (chooser.shown()) Fl::wait();
+                    if (chooser.value()) {
+                        std::ifstream in(chooser.value(), std::ios::binary);
+                        if (!in) { fl_alert("Could not open file."); return 1; }
+                        std::string raw((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+                        auto is_svg = [](const std::string& s) -> bool {
+                            size_t i = 0;
+                            while (i < s.size() && (s[i]==' '||s[i]=='\t'||s[i]=='\n'||s[i]=='\r')) ++i;
+                            if (i + 5 <= s.size() && s.compare(i, 5, "<?xml") == 0) {
+                                auto pos = s.find("<svg", i);
+                                if (pos == std::string::npos) pos = s.find("<SVG", i);
+                                return pos != std::string::npos;
+                            }
+                            return i + 4 <= s.size() && (s.compare(i, 4, "<svg") == 0 || s.compare(i, 4, "<SVG") == 0);
+                        };
+                        if (!is_svg(raw)) { fl_alert("Not an SVG file (missing <svg> header)."); return 1; }
+                        svg_data = std::move(raw);
+                    }
+                }
                 double wx, wy;
                 screenToWorld(mx, my, wx, wy);
                 pushUndo();
-                // empty svg — user pastes markup into Core Text + Update
-                VectorObject& vo = graph_->addVector(wx, wy, "", title, scale);
+                VectorObject& vo = graph_->addVector(wx, wy, svg_data, title, scale);
                 graph_->selectVector(vo.id);
+                do_callback();
+                redraw();
+            }
+            return 1;
+        }
+
+        // C — clone selection
+        if ((key == 'c' || key == 'C') && !(Fl::event_state() & FL_CTRL)) {
+            if (graph_ && graph_->selectionCount() > 0) {
+                pushUndo();
+                const double off = 0.5;
+                std::vector<uint64_t> nids, sids, vids;
+                for (auto* n : graph_->nodes()) if (n->selected) nids.push_back(n->id);
+                for (auto* s : graph_->squares()) if (s->selected) sids.push_back(s->id);
+                for (auto* v : graph_->vectors()) if (v->selected) vids.push_back(v->id);
+                graph_->clearSelection();
+                for (auto id : nids) {
+                    Node* src = graph_->getNode(id);
+                    if (!src) continue;
+                    Node& n = graph_->addNode(src->x + off, src->y + off, src->title + " copy");
+                    n.text = src->text; n.color = src->color;
+                    graph_->selectNode(n.id, true);
+                }
+                for (auto id : sids) {
+                    Square* src = graph_->getSquare(id);
+                    if (!src) continue;
+                    Square& s = graph_->addSquare(src->x + off, src->y + off, src->w, src->h, src->title + " copy");
+                    s.text = src->text; s.color = src->color; s.z = src->z;
+                    graph_->selectSquare(s.id, true);
+                }
+                for (auto id : vids) {
+                    VectorObject* src = graph_->getVector(id);
+                    if (!src) continue;
+                    VectorObject& v = graph_->addVector(src->x + off, src->y + off, src->svg, src->title + " copy", src->scale);
+                    graph_->selectVector(v.id, true);
+                }
                 do_callback();
                 redraw();
             }

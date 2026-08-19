@@ -352,7 +352,7 @@ void Graph::restoreFromSnap(const GraphSnap& s) {
     for (const auto& ss : s.squares) {
         auto* sq = new Square();
         sq->id = ss.id; sq->x = ss.x; sq->y = ss.y; sq->w = ss.w; sq->h = ss.h;
-        sq->title = ss.title; sq->text = ss.text; sq->color = ss.color;
+        sq->title = ss.title; sq->text = ss.text; sq->z = ss.z; sq->color = ss.color;
         squares_.push_back(sq); square_map_[sq->id] = sq;
     }
     for (const auto& vs : s.vectors) {

@@ -174,7 +174,7 @@ void RightPanel::refreshFromSelection() {
     if (sq) {
         title_input_->value(sq->title.c_str());
         static char idbuf[48];
-        snprintf(idbuf, sizeof(idbuf), "S%llu", (unsigned long long)sq->id);
+        snprintf(idbuf, sizeof(idbuf), "S%llu  z=%d", (unsigned long long)sq->id, sq->z);
         id_value_->label(idbuf);
 
         static char xbuf[32], ybuf[32], wbuf[32], hbuf[32];
@@ -189,7 +189,9 @@ void RightPanel::refreshFromSelection() {
 
         text_input_->value(sq->text.c_str());
         color_btn_->color(fl_rgb_color(sq->r(), sq->g(), sq->b()));
-        conn_box_->label("(square region)");
+        static char zinfo[48];
+        snprintf(zinfo, sizeof(zinfo), "z=%d (-10..10, F4)", sq->z);
+        conn_box_->label(zinfo);
         redraw();
         return;
     }

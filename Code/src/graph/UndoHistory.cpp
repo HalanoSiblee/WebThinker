@@ -14,7 +14,7 @@ GraphSnap UndoHistory::capture() const {
     for (const auto* sq : graph_->squares()) {
         SquareSnap ss;
         ss.id = sq->id; ss.x = sq->x; ss.y = sq->y; ss.w = sq->w; ss.h = sq->h;
-        ss.title = sq->title; ss.text = sq->text; ss.color = sq->color;
+        ss.title = sq->title; ss.text = sq->text; ss.z = sq->z; ss.color = sq->color;
         s.squares.push_back(std::move(ss));
     }
     for (const auto* v : graph_->vectors()) {

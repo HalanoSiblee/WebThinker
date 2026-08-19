@@ -23,7 +23,7 @@ It's minimalism no bloatware opens instantly total binary size under ~ 140K
 - small size
 - small project size file
 - massive viewpoint /w snappy performance
-- rectangle nodes vectors
+- rectangle nodes vectors (square Z-index stacking)
 - customization meta for each object
 
 <img src="./.media/optmeter" width="50%" alt="Dashboard Preview">
@@ -42,7 +42,7 @@ It's minimalism no bloatware opens instantly total binary size under ~ 140K
 |F|find/search|
 |V|add vector|
 |Del|delete|
-|F1-F3|fast edit|
+|F1-F4|fast edit|
 
 ---
 ![WebThinker](./.media/img1)
